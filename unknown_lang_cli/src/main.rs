@@ -1,8 +1,6 @@
 use std::path::PathBuf;
 use clap::Parser;
 
-pub mod lexer;
-
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
