@@ -2,6 +2,8 @@ use clap::Parser;
 use colored::*;
 use std::path::PathBuf;
 
+use unknown_lang_parser;
+
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
 struct Args {
@@ -19,7 +21,9 @@ fn main() {
             ">".blue().bold(),
             "Entering REPL...".green().bold()
         );
-        std::process::exit(1);
+
+        unimplemented!("REPL is not implemented yet. Run with a specific file \
+            passed with --file.");
     }
 
     let compile_path = args.file.unwrap();

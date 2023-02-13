@@ -261,7 +261,12 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "colored",
+ "unknown_lang_parser",
 ]
+
+[[package]]
+name = "unknown_lang_parser"
+version = "0.1.0"
 
 [[package]]
 name = "version_check"

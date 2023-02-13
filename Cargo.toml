@@ -1,4 +1,5 @@
 [workspace]
 members = [
-    "unknown_lang_cli"
+    "unknown_lang_cli",
+    "unknown_lang_parser"
 ]
