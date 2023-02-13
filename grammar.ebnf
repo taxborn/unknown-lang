@@ -1,1 +1,15 @@
-/// Unknown Lang EBNF grammar
+// Unknown Language
+
+// Digits
+digit_excl_zero = "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+digit = "0" | digit_excl_zero ;
+oct_number = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7"
+hex_number = digit | "a" | "b" | "c" | "d" | "e" | "f"
+				   | "A" | "B" | "C" | "D" | "E" | "F"
+
+// Numbers cannot have leading zeros, if they do, they are parsed as special 
+// bases (like 0x for hex, 0b for binary, etc..)
+number = digit_excl_zero, { digit } ;
+
+// An integer may be zero, may be a negative number, or a positive number
+integer = "0" | [ "-" ], number ;
