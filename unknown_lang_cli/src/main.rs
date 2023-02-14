@@ -26,6 +26,7 @@ fn main() {
             passed with --file.");
     }
 
+    // We can unwrap since we check for the None case before we get here
     let compile_path = args.file.unwrap();
 
     println!(
