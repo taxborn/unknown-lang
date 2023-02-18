@@ -10,6 +10,8 @@ func main() : = {
     // One thing I think that could be cool to experiment with would be 
 	// first-class support for function composition. This would act like 
 	// (f ∘ g)(x) or f(g(x)).
+	//
+	// if f: X
     let res = addOne ** add (2, 3);
 
     // This should also be possible to write.
