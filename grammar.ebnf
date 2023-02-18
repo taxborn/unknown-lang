@@ -13,3 +13,6 @@ number = digit_excl_zero, { digit } ;
 
 // An integer may be zero, may be a negative number, or a positive number
 integer = "0" | [ "-" ], number ;
+
+// A float may be positive or negative, and have 
+float = [ "-" ], "0.0" | [ "-" ], { number }, ".", { number }

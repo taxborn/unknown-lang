@@ -1,0 +1,24 @@
+func addOne(a : usize) : usize = {
+    return a + 1;
+}
+
+func add(a : usize, b : usize) : usize = {
+    return a + b;
+}
+
+func main() : = {
+    // One thing I think that could be cool to experiment with would be 
+	// first-class support for function composition. This would act like 
+	// (f ∘ g)(x) or f(g(x)).
+    let res = addOne ** add (2, 3);
+
+    // This should also be possible to write.
+    let res = ( addOne ** add ) (2, 3);
+
+	// But not this, it seems weird to write and read.
+	// let res = addOne ** add 2;
+
+    res = addOne**add(3,4); // Whitespace would be optional so you could write
+	                        // it like this, but I think the spaces makes it 
+				            // cleared.
+}
