@@ -1,8 +1,9 @@
 use clap::Parser;
 use colored::*;
-use std::path::PathBuf;
+use anyhow;
+use std::{path::PathBuf, fs};
 
-use unknown_lang_parser;
+use unknown_lang_parser::lexer::state::Lexer;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -12,7 +13,7 @@ struct Args {
     file: Option<PathBuf>,
 }
 
-fn main() {
+fn main() -> anyhow::Result<()> {
     let args = Args::parse();
 
     if args.file.is_none() {
@@ -28,6 +29,7 @@ fn main() {
 
     // We can unwrap since we check for the None case before we get here
     let compile_path = args.file.unwrap();
+    let file_contents = fs::read_to_string(&compile_path)?;
 
     println!(
         "{} {} {}",
@@ -35,4 +37,10 @@ fn main() {
         "Compiling file:".white(),
         compile_path.display().to_string().green().bold()
     );
+    
+    let mut lexer = Lexer::new(&file_contents);
+
+    println!("{lexer:?}");
+
+    Ok(())
 }
