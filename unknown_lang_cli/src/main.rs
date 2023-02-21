@@ -40,7 +40,5 @@ fn main() -> anyhow::Result<()> {
     
     let mut lexer = Lexer::new(&file_contents);
 
-    println!("{lexer:?}");
-
     Ok(())
 }

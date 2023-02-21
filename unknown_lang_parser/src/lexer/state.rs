@@ -9,20 +9,6 @@ pub struct Lexer<'a> {
     error: bool,
 }
 
-impl<'a> Iterator for Lexer<'a> {
-    type Item = char;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        self.next_char();
-
-        if self.c == '\x00' {
-            return None;
-        }
-
-        Some(self.c)
-    }
-}
-
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         let mut lexer = Self {

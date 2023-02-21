@@ -1,0 +1,13 @@
+// The 'mut' keyword before a type denotes it to be mutable. This function 
+// takes in two arguments, a and b, and adds b to a.
+func add_inplace(a : mut usize, b : usize) : void = {
+    a += b;
+}
+
+fun add(a : usize, b : usize) : usize = {
+    return a + b;
+}
+
+func main() := {
+
+}

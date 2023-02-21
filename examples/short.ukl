@@ -1,0 +1,5 @@
+// ignore but store comments
+let a = 5;
+let b = 4;
+
+a + b
