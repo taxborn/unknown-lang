@@ -1,5 +1,4 @@
-/* this is a test
- * multi-line comment
- */
+let +
+/* this is a test multi-line comment */
 
 // this is a test single-line comment

@@ -5,10 +5,10 @@ use super::{is_valid_id, is_valid_id_start, is_whitespace};
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
-    input: &'a str,
-    iter: Peekable<CharIndices<'a>>,
-    c: char,
-    ci: usize,
+    pub input: &'a str,
+    pub iter: Peekable<CharIndices<'a>>,
+    pub c: char,
+    pub ci: usize,
 }
 
 impl<'a> Lexer<'a> {
@@ -21,7 +21,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn advance(&mut self) {
+    pub fn advance(&mut self) {
         if let Some((index, chr)) = self.iter.next() {
             self.ci = index;
             self.c = chr;
@@ -32,7 +32,7 @@ impl<'a> Lexer<'a> {
         }
     }
 
-    fn accumulate_while(&mut self, pred: &dyn Fn(char) -> bool) -> &str {
+    pub fn accumulate_while(&mut self, pred: &dyn Fn(char) -> bool) -> &str {
         let start_index = self.ci;
 
         while let Some((_, chr)) = self.iter.peek() {
@@ -105,24 +105,13 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 '*' => self.single_token(Token::Star),
-                // TODO: comment lexing
                 '/' => {
                     self.advance();
                     match self.iter.peek() {
                         // Single-line comment
-                        Some((_, '/')) => {
-                            let _comment = self.accumulate_while(&|c| c != '\n');
-
-                            println!("comment found: {_comment}");
-
-                            self.lex_token()
-                        }
+                        Some((_, '/')) => self.lex_single_line_comment(),
                         // Multi-line comment
-                        Some((_, '*')) => {
-                            self.lex_multiline_comment();
-
-                            self.lex_token()
-                        }
+                        Some((_, '*')) => self.lex_multiline_comment(),
                         _ => self.single_token(Token::Slash),
                     }
                 }
@@ -161,7 +150,9 @@ impl<'a> Lexer<'a> {
                     let ident = self.accumulate_while(&is_valid_id).to_string();
                     Token::Ident(ident)
                 }
-                _ => todo!(),
+                &c => {
+                    Token::Error(c)
+                }
             },
         }
     }
@@ -171,32 +162,6 @@ impl<'a> Lexer<'a> {
     fn single_token(&mut self, token: Token) -> Token {
         self.advance();
         token
-    }
-
-    fn lex_multiline_comment(&mut self) {
-        self.advance();
-        let mut closed = false;
-
-        while let Some((_, chr)) = self.iter.peek() {
-            match chr {
-                '*' => {
-                    self.advance();
-                    if let Some((_, '/')) = self.iter.peek() {
-                        self.advance();
-                        closed = true;
-                        // break from the loop since we found the end
-                        break;
-                    }
-                }
-                _ => (),
-            }
-            self.advance();
-        }
-
-        // TODO: Replace panics with errors
-        if !closed {
-            panic!("unclosed multiline comment");
-        }
     }
 
     fn current_character(&self) -> &char {

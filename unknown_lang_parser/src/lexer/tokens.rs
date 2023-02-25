@@ -41,6 +41,8 @@ pub enum Token {
     Char(char),
     Str(String),
     Ident(String),
+    // is_
+    Comment(bool, String),
     // TODO: Numbers
 
     // Operators
@@ -80,7 +82,8 @@ pub enum Token {
     /// +=
     PlusEq,
 
-    Eof
+    Eof,
+    Error(char),
 }
 
 impl std::fmt::Display for Token {
@@ -108,6 +111,9 @@ impl std::fmt::Display for Token {
             Token::Char(chr) => write!(f, "'{chr}'"),
             Token::Str(string) => write!(f, "\"{string}\""),
             Token::Ident(ident) => write!(f, "[{ident}]"),
+            Token::Comment(true, cmt) => write!(f, "{cmt}"),
+            Token::Comment(false, cmt) => write!(f, "// {cmt}"),
+            Token::Error(err) => write!(f, "ERR[{err}]"),
 
             Token::Plus => write!(f, "+"),
             Token::Minus => write!(f, "-"),
@@ -127,6 +133,15 @@ impl std::fmt::Display for Token {
             Token::BangEq => write!(f, "!="),
             Token::PlusEq => write!(f, "+="),
             Token::Eof => write!(f, "<EOF>"),
+        }
+    }
+}
+
+impl Token {
+    fn is_multiline_comment(&self) -> bool {
+        match self {
+            Token::Comment(true, _) => true,
+            _ => false
         }
     }
 }

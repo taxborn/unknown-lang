@@ -40,6 +40,9 @@ fn main() -> anyhow::Result<()> {
     
     let mut lexer = Lexer::new(&file_contents);
     let tok = lexer.lex_token();
+    println!("first token found: {tok:?}");
+    let tok = lexer.lex_token();
+    println!("next token found: {tok:?}");
     
     Ok(())
 }

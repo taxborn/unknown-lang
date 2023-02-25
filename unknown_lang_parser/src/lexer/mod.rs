@@ -1,5 +1,6 @@
 pub mod tokens;
 pub mod state;
+pub mod comments;
 
 fn is_whitespace(chr: char) -> bool {
     matches!(chr, ' ' | '\r' | '\t')
