@@ -9,7 +9,7 @@ fn is_whitespace(chr: char) -> bool {
 /// to the grammar, this is all letters lowercase and uppercase, numbers, and
 /// underscores.
 fn is_valid_id(chr: char) -> bool {
-    chr.is_alphanumeric() | matches!(chr, '_')
+    chr.is_alphanumeric() || matches!(chr, '_')
 }
 
 /// Checking if a given character is valid for the *start* of identifiers. 

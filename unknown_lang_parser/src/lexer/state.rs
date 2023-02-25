@@ -1,5 +1,4 @@
 use std::{iter::Peekable, str::CharIndices};
-
 #[derive(Debug)]
 pub struct Lexer<'a> {
     input: &'a str,
@@ -25,7 +24,7 @@ impl<'a> Lexer<'a> {
         lexer
     }
 
-    fn next_char(&mut self) {
+    pub fn next_char(&mut self) {
         if let Some((index, chr)) = self.iter.next() {
             self.ci = index;
             self.c = chr;
@@ -34,5 +33,19 @@ impl<'a> Lexer<'a> {
             self.ci = self.input.len();
             self.c = '\x00';
         }
+    }
+
+    pub fn accumulate_while(&mut self, pred: &dyn Fn(char) -> bool) -> &str {
+        let start_index = self.ci;
+
+        while let Some((_, chr)) = self.iter.peek() {
+            if !pred(*chr) {
+                break;
+            }
+
+            self.next_char();
+        }
+
+        &self.input[..=(self.ci - start_index)]
     }
 }

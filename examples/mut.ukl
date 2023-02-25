@@ -4,7 +4,7 @@ func add_inplace(a : mut usize, b : usize) : void = {
     a += b;
 }
 
-fun add(a : usize, b : usize) : usize = {
+func add(a : usize, b : usize) : usize = {
     return a + b;
 }
 
