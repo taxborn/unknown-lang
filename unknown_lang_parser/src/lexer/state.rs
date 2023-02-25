@@ -177,33 +177,26 @@ impl<'a> Lexer<'a> {
         self.advance();
         let mut closed = false;
 
-        let mut next = |p: &mut Lexer<'a>| {
-            p.iter.next();
-        };
-
         while let Some((_, chr)) = self.iter.peek() {
             match chr {
                 '*' => {
-                    next(self);
+                    self.advance();
                     if let Some((_, '/')) = self.iter.peek() {
+                        self.advance();
                         closed = true;
+                        // break from the loop since we found the end
                         break;
                     }
                 }
                 _ => (),
             }
-            next(self);
+            self.advance();
         }
 
+        // TODO: Replace panics with errors
         if !closed {
             panic!("unclosed multiline comment");
-        } else {
-            println!(":)");
         }
-    }
-
-    pub fn lex_next_token(&mut self) -> Token {
-        self.lex_token()
     }
 
     fn current_character(&self) -> &char {
