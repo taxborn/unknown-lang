@@ -11,11 +11,11 @@ func main() : = {
 	// first-class support for function composition. This would act like 
 	// (f ∘ g)(x) or f(g(x)).
 	//
-	// if f: X
-    let res = addOne ** add (2, 3);
+	// if g: X -> Y and f: Y -> Z, then for h = f ∘ g, h: X -> Z
+    let res = addOne ~ add (2, 3);
 
     // This should also be possible to write.
-    let res = ( addOne ** add ) (2, 3);
+    let res = ( addOne ~ add ) (2, 3);
 
 	// But not this, it seems weird to write and read.
 	// let res = addOne ** add 2;

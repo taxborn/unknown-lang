@@ -1,4 +1,5 @@
 //! Tokens for unknown-lang parser
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token {
     /// (
     LPar,
@@ -39,6 +40,7 @@ pub enum Token {
 
     Char(char),
     Str(String),
+    Ident(String),
     // TODO: Numbers
 
     // Operators
@@ -102,8 +104,10 @@ impl std::fmt::Display for Token {
             Token::Dot => write!(f, "."),
             Token::DotDot => write!(f, ".."),
             Token::Tilde => write!(f, "~"),
+
             Token::Char(chr) => write!(f, "'{chr}'"),
             Token::Str(string) => write!(f, "\"{string}\""),
+            Token::Ident(ident) => write!(f, "[{ident}]"),
 
             Token::Plus => write!(f, "+"),
             Token::Minus => write!(f, "-"),
