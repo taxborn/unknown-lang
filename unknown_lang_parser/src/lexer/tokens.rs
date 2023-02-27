@@ -136,12 +136,3 @@ impl std::fmt::Display for Token {
         }
     }
 }
-
-impl Token {
-    fn is_multiline_comment(&self) -> bool {
-        match self {
-            Token::Comment(true, _) => true,
-            _ => false
-        }
-    }
-}

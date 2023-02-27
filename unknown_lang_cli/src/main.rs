@@ -1,9 +1,8 @@
 use clap::Parser;
 use colored::*;
-use anyhow;
-use std::{path::PathBuf, fs};
+use std::{fs, path::PathBuf};
 
-use unknown_lang_parser::lexer::state::Lexer;
+use unknown_lang_parser::lexer::{state::Lexer, tokens::Token};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -23,8 +22,10 @@ fn main() -> anyhow::Result<()> {
             "Entering REPL...".green().bold()
         );
 
-        unimplemented!("REPL is not implemented yet. Run with a specific file \
-            passed with --file.");
+        unimplemented!(
+            "REPL is not implemented yet. Run with a specific file \
+            passed with --file."
+        );
     }
 
     // We can unwrap since we check for the None case before we get here
@@ -37,12 +38,15 @@ fn main() -> anyhow::Result<()> {
         "Compiling file:".white(),
         compile_path.display().to_string().green().bold()
     );
-    
+
     let mut lexer = Lexer::new(&file_contents);
-    let tok = lexer.lex_token();
-    println!("first token found: {tok:?}");
-    let tok = lexer.lex_token();
-    println!("next token found: {tok:?}");
-    
+    let mut tok = lexer.lex_next();
+
+    // loop through the tokens
+    while tok != Token::Eof {
+        println!("token: {tok:?}");
+        tok = lexer.lex_next();
+    }
+
     Ok(())
 }

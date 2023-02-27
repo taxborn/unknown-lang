@@ -1,170 +1,85 @@
 use crate::lexer::tokens::Token;
-use std::{iter::Peekable, str::CharIndices};
-
-use super::{is_valid_id, is_valid_id_start, is_whitespace};
+use std::{iter::Peekable, str::Chars};
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
     pub input: &'a str,
-    pub iter: Peekable<CharIndices<'a>>,
-    pub c: char,
-    pub ci: usize,
+    pub lookahead: Peekable<Chars<'a>>,
+    pub pos: usize,
 }
 
 impl<'a> Lexer<'a> {
     pub fn new(input: &'a str) -> Self {
         Self {
             input,
-            iter: input.char_indices().peekable(),
-            c: '\x00',
-            ci: 0,
+            lookahead: input.chars().peekable(),
+            pos: 0,
         }
     }
 
-    pub fn advance(&mut self) {
-        if let Some((index, chr)) = self.iter.next() {
-            self.ci = index;
-            self.c = chr;
-        } else {
-            // If we are at the end,
-            self.ci = self.input.len();
-            self.c = '\x00';
+    pub fn next_char(&mut self) -> Option<char> {
+        if let Some(chr) = self.lookahead.next() {
+            // since indexing can happen 'within' a character, we want to always
+            // increase the index by the length of the character.
+            let len = chr.len_utf8();
+
+            // consume the next len characters
+            self.input = &self.input[len..];
+            // increment the current position
+            self.pos += chr.len_utf8();
+
+            return Some(chr);
         }
+
+        // If we are at the end, the index should be the length of the
+        // input
+        self.pos = self.input.len();
+
+        None
     }
 
     pub fn accumulate_while(&mut self, pred: &dyn Fn(char) -> bool) -> &str {
-        let start_index = self.ci;
+        let mut size = 0;
 
-        while let Some((_, chr)) = self.iter.peek() {
-            if !pred(*chr) {
+        while let Some(&chr) = self.lookahead.peek() {
+            // we want to continue looping while the predicate is true, if it
+            // is false, we will break from the loop.
+            if !pred(chr) {
                 break;
             }
 
-            self.advance();
+            // increment the size by the utf-8 length, otherwise sometimes we
+            // can index 'half-way' into a character, which could have weird
+            // consequences.
+            size += chr.len_utf8();
+            self.lookahead.next();
         }
 
-        &self.input[..=(self.ci - start_index)]
+        let (out, rest) = self.input.split_at(size);
+        self.pos += size;
+        self.input = rest;
+        out
     }
 
-    pub fn lex_token(&mut self) -> Token {
-        match self.iter.peek() {
-            None => Token::Eof,
-            Some((_, chr)) => match chr {
-                c if is_whitespace(*c) => {
-                    self.accumulate_while(&is_whitespace);
-                    self.lex_token()
-                }
-                '\n' => {
-                    self.accumulate_while(&|x| matches!(x, '\n' | '\r'));
-                    self.lex_token()
-                }
-                '.' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '.')) => self.single_token(Token::DotDot),
-                        _ => self.single_token(Token::Dot),
-                    }
-                }
-                '(' => self.single_token(Token::LPar),
-                ')' => self.single_token(Token::RPar),
-                '[' => self.single_token(Token::LBracket),
-                ']' => self.single_token(Token::RBracket),
-                '{' => self.single_token(Token::LBrace),
-                '}' => self.single_token(Token::RBrace),
-                '=' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '=')) => self.single_token(Token::EqEq),
-                        Some((_, '>')) => self.single_token(Token::FatArrow),
-                        _ => self.single_token(Token::Eq),
-                    }
-                }
-                ':' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, ':')) => self.single_token(Token::ColonColon),
-                        _ => self.single_token(Token::Colon),
-                    }
-                }
-                ';' => self.single_token(Token::Semi),
-                '$' => self.single_token(Token::Dollar),
-                ',' => self.single_token(Token::Comma),
-                '-' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '>')) => self.single_token(Token::RightArrow),
-                        _ => self.single_token(Token::Minus),
-                    }
-                }
-                '~' => self.single_token(Token::Tilde),
-                '+' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '=')) => self.single_token(Token::PlusEq),
-                        _ => self.single_token(Token::Plus),
-                    }
-                }
-                '*' => self.single_token(Token::Star),
-                '/' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        // Single-line comment
-                        Some((_, '/')) => self.lex_single_line_comment(),
-                        // Multi-line comment
-                        Some((_, '*')) => self.lex_multiline_comment(),
-                        _ => self.single_token(Token::Slash),
-                    }
-                }
-                '%' => self.single_token(Token::Percent),
-                '&' => self.single_token(Token::Ampersand),
-                '|' => self.single_token(Token::Bar),
-                '^' => self.single_token(Token::Hat),
-                '>' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '=')) => self.single_token(Token::GreaterEq),
-                        Some((_, '>')) => self.single_token(Token::GreaterGreater),
-                        _ => self.single_token(Token::Greater),
-                    }
-                }
-                '<' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '=')) => self.single_token(Token::LessEq),
-                        Some((_, '<')) => self.single_token(Token::LessLess),
-                        _ => self.single_token(Token::Less),
-                    }
-                }
-                '!' => {
-                    self.advance();
-                    match self.iter.peek() {
-                        Some((_, '=')) => self.single_token(Token::BangEq),
-                        _ => self.single_token(Token::Bang),
-                    }
-                }
-                // TODO: Numbers
-                c if c.is_ascii_digit() => Token::Bang,
-                // TODO: Does the lexer need to be moved to the next character
-                // after accumulate_while?
-                c if is_valid_id_start(*c) => {
-                    let ident = self.accumulate_while(&is_valid_id).to_string();
-                    Token::Ident(ident)
-                }
-                &c => {
-                    Token::Error(c)
-                }
-            },
+    pub fn next_chars(&mut self, size: usize) -> Option<&str> {
+        // Check to see that the next n characters exist. If any return None,
+        // we return None sunce we can't return the next n chars.
+        for _ in 0..size {
+            if let Some(chr) = self.lookahead.peek() {
+                self.pos += chr.len_utf8();
+                self.lookahead.next();
+            } else {
+                return None;
+            }
         }
+
+        let str = &self.input[..size];
+        self.input = &self.input[size..];
+        Some(str)
     }
 
-    /// Helper for the lexer to lex a single token and move to the next
-    /// cursor
-    fn single_token(&mut self, token: Token) -> Token {
-        self.advance();
-        token
-    }
-
-    fn current_character(&self) -> &char {
-        &self.c
+    #[inline]
+    pub fn lex_next(&mut self) -> Token {
+        self.lex_token()
     }
 }
