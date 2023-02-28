@@ -10,7 +10,9 @@ struct Args {
     /// File to compile. If no file is provided, enter unknown-lang REPL.
     #[arg(short, long, value_name = "FILE.ukl")]
     file: Option<PathBuf>,
-}
+    /// Toggle to print the tokens of the file. Needs --file to be passed.
+    #[arg(short, long, default_value_t = false)]
+    print_tokens: bool, }
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -40,13 +42,26 @@ fn main() -> anyhow::Result<()> {
     );
 
     let mut lexer = Lexer::new(&file_contents);
+
+    //-----------------------------
+    // This section currently is for debug purposes, this will be removed and 
+    // substituted in for a parser.
     let mut tok = lexer.lex_next();
 
     // loop through the tokens
     while tok != Token::Eof {
-        println!("token: {tok:?}");
+        if args.print_tokens {
+            println!("{tok}");
+        }
         tok = lexer.lex_next();
     }
+    //-----------------------------
+
+    println!(
+        "{} {}",
+        ">".blue().bold(),
+        "Compilation successful!".green(),
+    );
 
     Ok(())
 }

@@ -39,11 +39,14 @@ pub enum Token {
     Tilde,
 
     Char(char),
-    Str(String),
+    // The first boolean is used to store if it a double-quoted string (true) or single-quoted
+    // string (false)
+    Str(bool, String),
     Ident(String),
-    // is_
     Comment(bool, String),
-    // TODO: Numbers
+    // Currently all numbers (including floats) will go into this number
+    // token, and later will be split into different typed numbers.
+    Number(String),
 
     // Operators
     /// +
@@ -109,11 +112,13 @@ impl std::fmt::Display for Token {
             Token::Tilde => write!(f, "~"),
 
             Token::Char(chr) => write!(f, "'{chr}'"),
-            Token::Str(string) => write!(f, "\"{string}\""),
+            Token::Str(true, string) => write!(f, "\"{string}\""),
+            Token::Str(false, string) => write!(f, "'{string}'"),
             Token::Ident(ident) => write!(f, "[{ident}]"),
             Token::Comment(true, cmt) => write!(f, "{cmt}"),
             Token::Comment(false, cmt) => write!(f, "// {cmt}"),
             Token::Error(err) => write!(f, "ERR[{err}]"),
+            Token::Number(num) => write!(f, "Num({num})"),
 
             Token::Plus => write!(f, "+"),
             Token::Minus => write!(f, "-"),

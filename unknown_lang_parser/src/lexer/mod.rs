@@ -1,6 +1,7 @@
 pub mod comments;
 pub mod state;
 pub mod tokens;
+pub mod literals;
 
 use self::{state::Lexer, tokens::Token};
 
@@ -52,15 +53,15 @@ impl<'a> Lexer<'a> {
     /// Get the next token from the lexer.
     fn lex_token(&mut self) -> Token {
         // Check if there is a character to move to
-        if let Some(chr) = self.lookahead.peek() {
+        if let Some(&chr) = self.lookahead.peek() {
             match chr {
-                c if is_whitespace(*c) => {
+                c if is_whitespace(c) => {
                     self.accumulate_while(&is_whitespace);
-                    self.lex_next()
+                    self.lex_token()
                 }
                 '\n' => {
                     self.accumulate_while(&|x| matches!(x, '\n' | '\r'));
-                    self.lex_next()
+                    self.lex_token()
                 }
                 '.' => {
                     self.next_char();
@@ -146,15 +147,16 @@ impl<'a> Lexer<'a> {
                         _ => Token::Bang,
                     }
                 }
-                // TODO: Numbers
+                '"' | '\'' => self.lex_string(),
                 c if c.is_ascii_digit() => self.single_token(Token::Bang),
+                // TODO: Numbers
                 // TODO: Does the lexer need to be moved to the next character
                 // after accumulate_while?
-                c if is_valid_id_start(*c) => {
+                c if is_valid_id_start(c) => {
                     let ident = self.accumulate_while(&is_valid_id).to_string();
                     Token::Ident(ident)
                 }
-                &c => Token::Error(c),
+                c => Token::Error(c),
             }
         } else {
             // If there is no character to move to, return an EOF Token
