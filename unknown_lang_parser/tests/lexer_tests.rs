@@ -8,9 +8,9 @@ mod tests {
     fn lexer_eof_empty() {
         let mut lexer = Lexer::new("");
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Eof);
+        assert_eq!(tok, Ok(Token::Eof));
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Eof);
+        assert_eq!(tok, Ok(Token::Eof));
     }
 
     #[test]
@@ -18,10 +18,10 @@ mod tests {
         let mut lexer = Lexer::new("!");
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Bang);
+        assert_eq!(tok, Ok(Token::Bang));
 
         let tok2 = lexer.lex_next();
-        assert_eq!(tok2, Token::Eof);
+        assert_eq!(tok2, Ok(Token::Eof));
     }
 
     #[test]
@@ -29,13 +29,13 @@ mod tests {
         let mut lexer = Lexer::new("<<<");
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::LessLess);
+        assert_eq!(tok, Ok(Token::LessLess));
 
         let tok2 = lexer.lex_next();
-        assert_eq!(tok2, Token::Less);
+        assert_eq!(tok2, Ok(Token::Less));
 
         let tok3 = lexer.lex_next();
-        assert_eq!(tok3, Token::Eof);
+        assert_eq!(tok3, Ok(Token::Eof));
     }
 
 
@@ -45,7 +45,7 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.get_next_token();
-        assert!(matches!(tok, Token::Plus))
+        assert!(matches!(tok, Ok(Token::Plus)));
     }
 
     #[test]
@@ -54,6 +54,6 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.get_next_token();
-        assert!(matches!(tok, Token::Plus))
+        assert!(matches!(tok, Ok(Token::Plus)));
     }
 }

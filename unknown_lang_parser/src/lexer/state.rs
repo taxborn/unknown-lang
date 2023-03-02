@@ -1,5 +1,7 @@
-use crate::lexer::tokens::Token;
 use std::{iter::Peekable, str::Chars};
+
+use super::TokenResult;
+
 
 #[derive(Debug)]
 pub struct Lexer<'a> {
@@ -38,13 +40,14 @@ impl<'a> Lexer<'a> {
         None
     }
 
-    pub fn accumulate_while(&mut self, pred: &dyn Fn(char) -> bool) -> &str {
+    /// Accumulate while a predicate is true
+    pub fn accumulate_while(&mut self, predicate: &dyn Fn(char) -> bool) -> &str {
         let mut size = 0;
 
         while let Some(&chr) = self.lookahead.peek() {
             // we want to continue looping while the predicate is true, if it
             // is false, we will break from the loop.
-            if !pred(chr) {
+            if !predicate(chr) {
                 break;
             }
 
@@ -55,10 +58,14 @@ impl<'a> Lexer<'a> {
             self.lookahead.next();
         }
 
-        let (out, rest) = self.input.split_at(size);
+        // Increase the position
         self.pos += size;
+        // Split the input at the specified size
+        let (accumulated, rest) = self.input.split_at(size);
+        // Consome the accumulated characters
         self.input = rest;
-        out
+        // Return the output
+        accumulated
     }
 
     pub fn next_chars(&mut self, size: usize) -> Option<&str> {
@@ -79,7 +86,7 @@ impl<'a> Lexer<'a> {
     }
 
     #[inline]
-    pub fn lex_next(&mut self) -> Token {
+    pub fn lex_next(&mut self) -> TokenResult {
         self.lex_token()
     }
 }

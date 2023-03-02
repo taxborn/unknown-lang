@@ -39,9 +39,7 @@ pub enum Token {
     Tilde,
 
     Char(char),
-    // The first boolean is used to store if it a double-quoted string (true) or single-quoted
-    // string (false)
-    Str(bool, String),
+    Str(String),
     Ident(String),
     Comment(bool, String),
     // Currently all numbers (including floats) will go into this number
@@ -112,8 +110,7 @@ impl std::fmt::Display for Token {
             Token::Tilde => write!(f, "~"),
 
             Token::Char(chr) => write!(f, "'{chr}'"),
-            Token::Str(true, string) => write!(f, "\"{string}\""),
-            Token::Str(false, string) => write!(f, "'{string}'"),
+            Token::Str(string) => write!(f, "\"{string}\""),
             Token::Ident(ident) => write!(f, "[{ident}]"),
             Token::Comment(true, cmt) => write!(f, "{cmt}"),
             Token::Comment(false, cmt) => write!(f, "// {cmt}"),

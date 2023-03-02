@@ -1,27 +1,20 @@
-use super::{Lexer, Token};
+use super::{errors::LexingError, Lexer, Token, TokenResult};
 
 impl<'a> Lexer<'a> {
-    pub fn lex_string(&mut self) -> Token {
-        let mut string = String::new();
-        // TODO: When errors are implemented, change the return type to a
-        // [`Result`] and handle then
-        let mut error = false;
+    pub fn lex_string(&mut self) -> TokenResult {
+        // Consume the initial quote (")
+        self.next_char();
 
-        let curr = self.next_char().unwrap();
+        let mut string = String::new();
 
         while let Some(chr) = self.lookahead.peek() {
             match chr {
-                _ if chr == &curr => break,
+                // When we encounter another quote, break from the loop
+                '"' => break,
                 '\\' => {
                     self.next_char();
-                    match self.lex_escaped_char() {
-                        None => {
-                            let str = self.accumulate_while(&|c| c != curr);
-                            error = true;
-                            string.push_str(str);
-                        }
-                        Some(x) => string.push(x),
-                    }
+                    let escape = self.lex_escaped_char()?;
+                    string.push(escape);
                     continue;
                 }
                 chr => string.push(*chr),
@@ -30,41 +23,35 @@ impl<'a> Lexer<'a> {
             self.next_char();
         }
 
-        if self.next_char().is_some() {
-            return Token::Str(curr == '"', string);
+        return match self.next_char() {
+            // If check if we have the another character
+            Some(_) => Ok(Token::Str(string)),
+            // Otherwise if no character was found, we know that the string did not
+            // close properly, so throw an error.
+            None => Err(LexingError::NoNextCharacter)
         }
-
-        if error {
-            println!("error encountered while parsing character escapes");
-        }
-
-        Token::Error('"')
     }
 
-    /// If we encounter a backslash, we want to peek ahead to the next 
-    /// character. If the character would make it a valid escape character, 
+    /// If we encounter a backslash, we want to peek ahead to the next
+    /// character. If the character would make it a valid escape character,
     /// return the actual escaped character, rather than just the back slash
     /// and escape code independently.
-    fn lex_escaped_char(&mut self) -> Option<char> {
-        match self.lookahead.peek() {
-            // TODO: When errors are implemented, change the return type to a
-            // [`Result`] and handle then
-            None => None,
-            Some(&x) => {
-                self.next_char();
-
-                match x {
-                    '\'' => Some('\''),
-                    '\"' => Some('\"'),
-                    'n' => Some('\n'),
-                    'r' => Some('\r'),
-                    't' => Some('\t'),
-                    '0' => Some('\0'),
-                    '\\' => Some('\\'),
-                    _ => None,
-                }
+    fn lex_escaped_char(&mut self) -> Result<char, LexingError> {
+        if let Some(&x) = self.lookahead.peek() {
+            self.next_char();
+            return match x {
+                '\'' => Ok('\''),
+                '"' => Ok('"'),
+                'n' => Ok('\n'),
+                'r' => Ok('\r'),
+                't' => Ok('\t'),
+                '0' => Ok('\0'),
+                '\\' => Ok('\\'),
+                _ => Err(LexingError::NoNextCharacter),
             }
         }
+
+        Err(LexingError::NoNextCharacter)
     }
 
     pub fn lex_number(&mut self) {}
@@ -75,33 +62,24 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_matching_single_quotes() {
-        let input = "'this is a test'";
-        let mut lexer = Lexer::new(input);
-
-        let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Str(false, "this is a test".to_string()));
-    }
-
-    #[test]
     fn test_matching_double_quotes() {
         let input = "\"this is a test\"";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Str(true, "this is a test".to_string()));
+        assert_eq!(tok, Ok(Token::Str("this is a test".to_string())));
     }
 
     #[test]
     fn test_newlines_within_strings() {
-        let input = "'this is a \r\t\ntest'";
+        let input = "\"this is a \r\t\ntest\"";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Str(false, "this is a \r\t\ntest".to_string()));
+        assert_eq!(tok, Ok(Token::Str("this is a \r\t\ntest".to_string())));
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Eof);
+        assert_eq!(tok, Ok(Token::Eof));
     }
 
     #[test]
@@ -110,6 +88,15 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Token::Str(true, "this is a \ttest".to_string()));
+        assert_eq!(tok, Ok(Token::Str("this is a \ttest".to_string())));
+    }
+
+    #[test]
+    fn test_unclosed_string() {
+        let input = "\"this is a test";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::NoNextCharacter));
     }
 }

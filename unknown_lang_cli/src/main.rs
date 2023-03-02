@@ -46,15 +46,18 @@ fn main() -> anyhow::Result<()> {
     //-----------------------------
     // This section currently is for debug purposes, this will be removed and 
     // substituted in for a parser.
-    let mut tok = lexer.lex_next();
+
+    let mut tok = lexer.lex_next()?;
 
     // loop through the tokens
     while tok != Token::Eof {
         if args.print_tokens {
-            println!("{tok}");
+            println!("{tok:?}");
         }
-        tok = lexer.lex_next();
+
+        tok = lexer.lex_next()?;
     }
+
     //-----------------------------
 
     println!(
