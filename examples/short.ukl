@@ -1,4 +1,4 @@
 let a := "this is a test";
-let b := 2;
+let b := 0b132;
 
 a + b;

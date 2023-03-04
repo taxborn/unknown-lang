@@ -100,6 +100,7 @@ impl<'a> Lexer<'a> {
                 '-' => {
                     self.next_char();
                     match self.lookahead.peek() {
+                        Some(chr) if chr.is_ascii_digit() => self.lex_number(),
                         Some('>') => Ok(self.single_token(Token::RightArrow)),
                         _ => Ok(Token::Minus),
                     }
@@ -151,10 +152,7 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 '"' => self.lex_string(),
-                c if c.is_ascii_digit() => Ok(self.single_token(Token::Bang)),
-                // TODO: Numbers
-                // TODO: Does the lexer need to be moved to the next character
-                // after accumulate_while?
+                c if c.is_ascii_digit() => self.lex_number(), 
                 c if is_valid_id_start(c) => {
                     let ident = self.accumulate_while(&is_valid_id).to_string();
                     Ok(Token::Ident(ident))
@@ -218,9 +216,7 @@ mod tests {
             Token::Ident("a".to_string()),
             Token::Colon,
             Token::Eq,
-            // TODO: When numbers are implemented, this will break and need to
-            // be updated.
-            Token::Bang,
+            Token::Number("5".to_string()),
             Token::Semi,
         ];
 

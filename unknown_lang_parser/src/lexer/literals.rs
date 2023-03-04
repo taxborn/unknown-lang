@@ -1,5 +1,34 @@
 use super::{errors::LexingError, Lexer, Token, TokenResult};
 
+// TODO: Evaluate if these are actually needed
+#[allow(dead_code)]
+impl Token {
+    /// Checks if a given token is a binary number
+    fn is_bin(&self) -> bool {
+        matches!(self, Token::Number(2, _))
+    }
+
+    /// Checks if a given token is a octal number
+    fn is_oct(&self) -> bool {
+        matches!(self, Token::Number(8, _))
+    }
+
+    /// Checks if a given token is a decimal number
+    fn is_dec(&self) -> bool {
+        matches!(self, Token::Number(10, _))
+    }
+
+    /// Checks if a given token is a hexadecimal number
+    fn is_hex(&self) -> bool {
+        matches!(self, Token::Number(16, _))
+    }
+
+    /// Checks if a given token is a hexadecimal number
+    fn is_base(&self, _radix: u8) -> bool {
+        matches!(self, Token::Number(_radix, _))
+    }
+}
+
 impl<'a> Lexer<'a> {
     pub fn lex_string(&mut self) -> TokenResult {
         // Consume the initial quote (")
@@ -23,12 +52,12 @@ impl<'a> Lexer<'a> {
             self.next_char();
         }
 
-        return match self.next_char() {
+        match self.next_char() {
             // If check if we have the another character
             Some(_) => Ok(Token::Str(string)),
             // Otherwise if no character was found, we know that the string did not
             // close properly, so throw an error.
-            None => Err(LexingError::NoNextCharacter)
+            None => Err(LexingError::NoNextCharacter),
         }
     }
 
@@ -48,13 +77,64 @@ impl<'a> Lexer<'a> {
                 '0' => Ok('\0'),
                 '\\' => Ok('\\'),
                 _ => Err(LexingError::NoNextCharacter),
-            }
+            };
         }
 
         Err(LexingError::NoNextCharacter)
     }
 
-    pub fn lex_number(&mut self) {}
+    /// Lex a number. This handles cases where the base is specified, like 
+    /// `0b110101` would translate to a binary number rather than a base 10
+    /// number. Currently supports bin, oct, dec, and hex, but would be easy
+    /// to add further and more abstract bases if needed.
+    ///
+    /// TODO: Maybe allow for arbitrary bases. Currently Rust's `.is_digit()`
+    /// function which is used in the `lex_number_with_base()` helper function
+    /// only allows for radicies up to 36.
+    pub fn lex_number(&mut self) -> TokenResult {
+        // Right now, we are either at the sign character or the first number
+        match self.lookahead.peek() {
+            // TODO: Should this be an error or EOF token?
+            None => Ok(Token::Eof),
+            Some('0') => {
+                self.next_char();
+                // Check if we are converting to another base
+                match self.lookahead.peek() {
+                    Some('x' | 'X') => {
+                        // consume base specifier
+                        self.next_char();
+                        self.lex_number_with_base(16)
+                    }
+                    Some('b' | 'B') => {
+                        // consume base specifier
+                        self.next_char();
+                        self.lex_number_with_base(2)
+                    }
+                    Some('o' | 'O') => {
+                        // consume base specifier
+                        self.next_char();
+                        self.lex_number_with_base(8)
+                    }
+                    Some('0'..='9' | _) | None => self.lex_number_with_base(10),
+                }
+            }
+            Some('0'..='9' | _) => self.lex_number_with_base(10),
+        }
+    }
+
+    fn lex_number_with_base(&mut self, base: u8) -> TokenResult {
+        // TODO: Allow floats, IEEE 754
+        let num = self.accumulate_while(&|x| x.is_digit(base as u32) || x == '_');
+        // TODO: Check if next character is also a number. If so, we know that
+        // the number provided wasn't correctly formatted for the base. For
+        // example, 0b12312 is not valid, and currently would lex as
+        // Number(2, 1) and Number(10, 2312). This might be able to be handled
+        // in the parser, but I think an early indication here would be helpful.
+        let num = if num.is_empty() { "0" } else { num };
+        let num = num.to_string();
+
+        Ok(Token::Number(base, num))
+    }
 }
 
 #[cfg(test)]
@@ -98,5 +178,31 @@ mod tests {
 
         let tok = lexer.lex_next();
         assert_eq!(tok, Err(LexingError::NoNextCharacter));
+    }
+
+    #[test]
+    fn test_lexing_negative_numbers() {
+        let input = "-123";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "-123".to_string())));
+    }
+
+    #[test]
+    fn test_lexing_numbers() {
+        let input = "123";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
+    }
+
+    #[test]
+    fn test_lexing_other_base() {
+        let input = "0b142";
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "142".to_string())))
     }
 }
