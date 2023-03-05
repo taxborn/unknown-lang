@@ -12,7 +12,11 @@ struct Args {
     file: Option<PathBuf>,
     /// Toggle to print the tokens of the file. Needs --file to be passed.
     #[arg(short, long, default_value_t = false)]
-    print_tokens: bool, }
+    print_tokens: bool,
+    /// Toggle to print diagnostics of compilation, like timings.
+    #[arg(short, long, default_value_t = false)]
+    diagnostics: bool,
+}
 
 fn main() -> anyhow::Result<()> {
     let args = Args::parse();
@@ -44,18 +48,35 @@ fn main() -> anyhow::Result<()> {
     let mut lexer = Lexer::new(&file_contents);
 
     //-----------------------------
-    // This section currently is for debug purposes, this will be removed and 
+    // This section currently is for debug purposes, this will be removed and
     // substituted in for a parser.
 
     let mut tok = lexer.lex_next()?;
+    let mut count = 0;
+    let start = std::time::Instant::now();
 
     // loop through the tokens
     while tok != Token::Eof {
+        count += 1;
         if args.print_tokens {
             println!("{tok:?}");
         }
 
         tok = lexer.lex_next()?;
+    }
+
+    let end = start.elapsed();
+
+    if args.diagnostics {
+        println!(
+            "{} {} {} {} {:?}{}",
+            ">".blue().bold(),
+            "Lexing".green(),
+            count,
+            "tokens took".green(),
+            end,
+            ".".green()
+        );
     }
 
     //-----------------------------

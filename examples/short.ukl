@@ -1,4 +1,4 @@
-let a := "this is a test";
-let b := 0b132;
+let a :usize= "this is a test";
+let b : i16 = 0b132;
 
 a + b;
