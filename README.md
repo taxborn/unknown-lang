@@ -1,4 +1,5 @@
 # :question: unknown-lang
+[![CI](https://github.com/taxborn/unknown-lang/actions/workflows/ci.yml/badge.svg)](https://github.com/taxborn/unknown-lang/actions/workflows/ci.yml)
 A programming language, in the works.
 
 ## Compiling
