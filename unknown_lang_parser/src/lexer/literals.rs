@@ -186,7 +186,11 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Number(10, "-123".to_string())));
+        assert_eq!(tok, Ok(Token::Minus));
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Eof));
     }
 
     #[test]
@@ -200,9 +204,9 @@ mod tests {
 
     #[test]
     fn test_lexing_other_base() {
-        let input = "0b142";
+        let input = "0b100101";
         let mut lexer = Lexer::new(input);
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Number(10, "142".to_string())))
+        assert_eq!(tok, Ok(Token::Number(2, "100101".to_string())))
     }
 }

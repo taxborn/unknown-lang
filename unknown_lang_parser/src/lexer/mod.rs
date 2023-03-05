@@ -100,7 +100,6 @@ impl<'a> Lexer<'a> {
                 '-' => {
                     self.next_char();
                     match self.lookahead.peek() {
-                        Some(chr) if chr.is_ascii_digit() => self.lex_number(),
                         Some('>') => Ok(self.single_token(Token::RightArrow)),
                         _ => Ok(Token::Minus),
                     }
@@ -216,7 +215,7 @@ mod tests {
             Token::Ident("a".to_string()),
             Token::Colon,
             Token::Eq,
-            Token::Number("5".to_string()),
+            Token::Number(10, "5".to_string()),
             Token::Semi,
         ];
 
