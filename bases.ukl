@@ -1,0 +1,9 @@
+func add(a: usize, b: usize) : usize = {
+    a + b
+}
+
+func main() := {
+    // We will always output a base 10 number, so the output of this would be
+    // 0x15 (21) + 0b101001 (41) = 62
+    let out := add(0x15, 0b101001);
+}

@@ -4,7 +4,10 @@ pub enum LexingError {
     UnclosedString,
     UnclosedMutlilineComment,
     UnusedEscape,
+    UnknownBase(String),
     UnknownEscapedCharacter(char),
+    BaseTooLarge(u8),
+    UnclosedBaseSpecifier,
 }
 
 impl std::fmt::Display for LexingError {
@@ -13,7 +16,10 @@ impl std::fmt::Display for LexingError {
             Self::NoNextCharacter => write!(f, "no next character"),
             Self::UnclosedString => write!(f, "unclosed string"),
             Self::UnclosedMutlilineComment => write!(f, "unclosed multi-line comment"),
+            Self::UnclosedBaseSpecifier => write!(f, "unclosed base specifier"),
             Self::UnusedEscape => write!(f, "unused escape sequence"),
+            Self::UnknownBase(base) => write!(f, "invalid base: {base}"),
+            Self::BaseTooLarge(base) => write!(f, "unsupported base: {base}"),
             Self::UnknownEscapedCharacter(chr) => write!(f, "unknown escape character: {chr}"),
         }
     }

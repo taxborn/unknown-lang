@@ -86,7 +86,7 @@ impl<'a> Lexer<'a> {
         Err(LexingError::UnusedEscape)
     }
 
-    /// Lex a number. This handles cases where the base is specified, like 
+    /// Lex a number. This handles cases where the base is specified, like
     /// `0b110101` would translate to a binary number rather than a base 10
     /// number. Currently supports bin, oct, dec, and hex, but would be easy
     /// to add further and more abstract bases if needed.
@@ -94,6 +94,8 @@ impl<'a> Lexer<'a> {
     /// TODO: Maybe allow for arbitrary bases. Currently Rust's `.is_digit()`
     /// function which is used in the `lex_number_with_base()` helper function
     /// only allows for radicies up to 36.
+    ///
+    /// Current idea: 0(17)182FG1 for a base 17 number.
     pub fn lex_number(&mut self) -> TokenResult {
         // Right now, we are either at the sign character or the first number
         match self.lookahead.peek() {
@@ -117,6 +119,38 @@ impl<'a> Lexer<'a> {
                         // consume base specifier
                         self.next_char();
                         self.lex_number_with_base(8)
+                    }
+                    Some('(') => {
+                        // consume base specifier
+                        self.next_char();
+                        // TODO: Parse everything between the parenthesis as a 
+                        // number itself, so we can have something like this:
+                        // 0(0xF)AFED, which would convert to 0(16)AFED.
+                        let base = self.accumulate_while(&|x| x.is_digit(10));
+
+                        if let Ok(radix) = base.parse::<u8>() {
+                            if let Some(')') = self.lookahead.peek() {
+                                // Consume closing base specifier
+                                self.next_char();
+
+                                // TODO:
+                                // Currently this is a limitation in Rust's `.is_digit()`
+                                // function. If we want to support larger bases, we need
+                                // to implement out own `.to_digit()` function. For now,
+                                // base 36 is fine.
+                                if radix > 36 {
+                                    return Err(LexingError::BaseTooLarge(radix));
+                                }
+
+                                let num = self.accumulate_while(&|x| x.is_digit(radix as u32));
+
+                                return Ok(Token::Number(radix as u8, num.to_string()));
+                            }
+
+                            return Err(LexingError::UnclosedBaseSpecifier);
+                        }
+
+                        Err(LexingError::UnknownBase(base.to_string()))
                     }
                     Some('0'..='9' | _) | None => self.lex_number_with_base(10),
                 }
@@ -227,5 +261,33 @@ mod tests {
         let mut lexer = Lexer::new(input);
         let tok = lexer.lex_next();
         assert_eq!(tok, Err(LexingError::UnusedEscape));
+    }
+
+    #[test]
+    fn test_awkward_base() {
+        let input = "0(17)123";
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(17, "123".to_string())));
+    }
+
+    #[test]
+    fn test_awkward_base_2() {
+        let input = "0(36)123";
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(36, "123".to_string())));
+    }
+
+    #[test]
+    fn test_unclosed_base_specifier() {
+        let input = "0(21;";
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::UnclosedBaseSpecifier));
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Semi));
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Eof));
     }
 }
