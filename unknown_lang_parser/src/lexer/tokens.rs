@@ -19,7 +19,7 @@ pub enum Token {
     EqEq,
     /// :
     Colon,
-    /// :::
+    /// ::
     ColonColon,
     /// ;
     Semi,

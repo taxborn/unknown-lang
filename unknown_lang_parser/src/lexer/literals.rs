@@ -57,7 +57,7 @@ impl<'a> Lexer<'a> {
             Some(_) => Ok(Token::Str(string)),
             // Otherwise if no character was found, we know that the string did not
             // close properly, so throw an error.
-            None => Err(LexingError::NoNextCharacter),
+            None => Err(LexingError::UnclosedString),
         }
     }
 
@@ -66,9 +66,12 @@ impl<'a> Lexer<'a> {
     /// return the actual escaped character, rather than just the back slash
     /// and escape code independently.
     fn lex_escaped_char(&mut self) -> Result<char, LexingError> {
-        if let Some(&x) = self.lookahead.peek() {
+        if let Some(&chr) = self.lookahead.peek() {
+            // now that we know there is something next, consume the forward slash and
+            // match on the escaped character
             self.next_char();
-            return match x {
+
+            return match chr {
                 '\'' => Ok('\''),
                 '"' => Ok('"'),
                 'n' => Ok('\n'),
@@ -76,11 +79,11 @@ impl<'a> Lexer<'a> {
                 't' => Ok('\t'),
                 '0' => Ok('\0'),
                 '\\' => Ok('\\'),
-                _ => Err(LexingError::NoNextCharacter),
+                _ => Err(LexingError::UnknownEscapedCharacter(chr)),
             };
         }
 
-        Err(LexingError::NoNextCharacter)
+        Err(LexingError::UnusedEscape)
     }
 
     /// Lex a number. This handles cases where the base is specified, like 
@@ -177,7 +180,7 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Err(LexingError::NoNextCharacter));
+        assert_eq!(tok, Err(LexingError::UnclosedString));
     }
 
     #[test]
@@ -207,6 +210,22 @@ mod tests {
         let input = "0b100101";
         let mut lexer = Lexer::new(input);
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Number(2, "100101".to_string())))
+        assert_eq!(tok, Ok(Token::Number(2, "100101".to_string())));
+    }
+
+    #[test]
+    fn test_catches_unknown_escape() {
+        let input = r#""unknown sequence\p""#;
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::UnknownEscapedCharacter('p')));
+    }
+
+    #[test]
+    fn test_catches_hanging_escape() {
+        let input = r#""unknown sequence\"#;
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::UnusedEscape));
     }
 }

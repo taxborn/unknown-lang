@@ -41,7 +41,7 @@ impl<'a> Lexer<'a> {
         self.pos += size;
 
         if !closed {
-            return Err(LexingError::NoNextCharacter);
+            return Err(LexingError::UnclosedMutlilineComment);
         }
 
         let comment = &self.input[..size - 2];
