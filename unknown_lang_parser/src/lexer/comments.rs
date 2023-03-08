@@ -2,7 +2,7 @@
 
 use crate::lexer::{state::Lexer, tokens::Token};
 
-use super::{TokenResult, errors::LexingError};
+use super::{errors::LexingError, TokenResult};
 
 impl<'a> Lexer<'a> {
     pub fn lex_comment(&mut self) -> TokenResult {
@@ -67,7 +67,10 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Comment(false, "This is a comment".to_string())));
+        assert_eq!(
+            tok,
+            Ok(Token::Comment(false, "This is a comment".to_string()))
+        );
 
         let tok = tok.unwrap();
         assert!(!tok.is_multiline_comment());
@@ -76,14 +79,16 @@ mod tests {
         assert_eq!(tok, Ok(Token::Eof));
     }
 
-
     #[test]
     fn test_comment_retain_spaces() {
         let input = "//  This is a comment";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Comment(false, "  This is a comment".to_string())));
+        assert_eq!(
+            tok,
+            Ok(Token::Comment(false, "  This is a comment".to_string()))
+        );
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Eof));
     }

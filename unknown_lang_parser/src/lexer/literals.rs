@@ -55,8 +55,8 @@ impl<'a> Lexer<'a> {
         match self.next_char() {
             // If check if we have the another character
             Some(_) => Ok(Token::Str(string)),
-            // Otherwise if no character was found, we know that the string did not
-            // close properly, so throw an error.
+            // Otherwise if no character was found, we know that the string did
+            // not close properly, so throw an error.
             None => Err(LexingError::UnclosedString),
         }
     }
@@ -67,8 +67,8 @@ impl<'a> Lexer<'a> {
     /// and escape code independently.
     fn lex_escaped_char(&mut self) -> Result<char, LexingError> {
         if let Some(&chr) = self.lookahead.peek() {
-            // now that we know there is something next, consume the forward slash and
-            // match on the escaped character
+            // now that we know there is something next, consume the forward
+            // slash and match on the escaped character
             self.next_char();
 
             return match chr {
@@ -126,7 +126,8 @@ impl<'a> Lexer<'a> {
                         // TODO: Parse everything between the parenthesis as a
                         // number itself, so we can have something like this:
                         // 0(0xF)AFED, which would convert to 0(16)AFED.
-                        let base = self.accumulate_while(&|x| x.is_ascii_digit());
+                        let base =
+                            self.accumulate_while(&|x| x.is_ascii_digit());
 
                         if let Ok(radix) = base.parse::<u8>() {
                             if let Some(')') = self.lookahead.peek() {
@@ -134,17 +135,27 @@ impl<'a> Lexer<'a> {
                                 self.next_char();
 
                                 // TODO:
-                                // Currently this is a limitation in Rust's `.is_digit()`
-                                // function. If we want to support larger bases, we need
-                                // to implement out own `.to_digit()` function. For now,
-                                // base 36 is fine.
+                                // Currently this is a limitation in Rust's
+                                // `.is_digit()`
+                                // function. If we want to support larger bases,
+                                // we need
+                                // to implement out own `.to_digit()` function.
+                                // For now, base
+                                // 36 is fine.
                                 if radix > 36 {
-                                    return Err(LexingError::BaseTooLarge(radix));
+                                    return Err(LexingError::BaseTooLarge(
+                                        radix,
+                                    ));
                                 }
 
-                                let num = self.accumulate_while(&|x| x.is_digit(radix as u32));
+                                let num = self.accumulate_while(&|x| {
+                                    x.is_digit(radix as u32)
+                                });
 
-                                return Ok(Token::Number(radix, num.to_string()));
+                                return Ok(Token::Number(
+                                    radix,
+                                    num.to_string(),
+                                ));
                             }
 
                             return Err(LexingError::UnclosedBaseSpecifier);
@@ -161,7 +172,8 @@ impl<'a> Lexer<'a> {
 
     fn lex_number_with_base(&mut self, base: u8) -> TokenResult {
         // TODO: Allow floats, IEEE 754
-        let num = self.accumulate_while(&|x| x.is_digit(base as u32) || x == '_');
+        let num =
+            self.accumulate_while(&|x| x.is_digit(base as u32) || x == '_');
         // TODO: Check if next character is also a number. If so, we know that
         // the number provided wasn't correctly formatted for the base. For
         // example, 0b12312 is not valid, and currently would lex as
@@ -217,7 +229,10 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Str("this\ris\na\t \\ \ttest\0".to_string())));
+        assert_eq!(
+            tok,
+            Ok(Token::Str("this\ris\na\t \\ \ttest\0".to_string()))
+        );
     }
 
     #[test]

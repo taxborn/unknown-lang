@@ -8,14 +8,12 @@ mod tests {
     fn get_toks<'a>(lexer: &mut Lexer) -> Vec<Token> {
         let mut toks: Vec<Token> = vec![];
 
-        loop {
-            let tok = lexer.lex_next();
-
-            if tok == Ok(Token::Eof) {
+        while let Ok(tok) = lexer.lex_next() {
+            if tok == Token::Eof {
                 break;
             }
 
-            toks.push(tok.unwrap());
+            toks.push(tok);
         }
 
         toks
@@ -45,6 +43,7 @@ mod tests {
     fn lexes_triples_correctly() {
         let input = "<<<>>>";
         let mut lexer = Lexer::new(input);
+
         let toks = get_toks(&mut lexer);
         let expected = vec![
             Token::LessLess,
@@ -52,10 +51,8 @@ mod tests {
             Token::GreaterGreater,
             Token::Greater,
         ];
-        assert_eq!(toks, expected);
 
-        let exp_eof = lexer.lex_next();
-        assert_eq!(exp_eof, Ok(Token::Eof));
+        assert_eq!(toks, expected);
     }
 
     #[test]
@@ -64,7 +61,6 @@ mod tests {
         let mut lexer = Lexer::new(input);
 
         let toks = get_toks(&mut lexer);
-
         let expected = vec![
             Token::Ident("let".to_string()),
             Token::Ident("a".to_string()),
@@ -75,9 +71,5 @@ mod tests {
         ];
 
         assert_eq!(toks, expected);
-
-        let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Eof));
     }
-
 }

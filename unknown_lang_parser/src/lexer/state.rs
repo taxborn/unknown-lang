@@ -2,7 +2,6 @@ use std::{iter::Peekable, str::Chars};
 
 use super::TokenResult;
 
-
 #[derive(Debug)]
 pub struct Lexer<'a> {
     pub input: &'a str,
@@ -41,7 +40,10 @@ impl<'a> Lexer<'a> {
     }
 
     /// Accumulate while a predicate is true
-    pub fn accumulate_while(&mut self, predicate: &dyn Fn(char) -> bool) -> &str {
+    pub fn accumulate_while(
+        &mut self,
+        predicate: &dyn Fn(char) -> bool,
+    ) -> &str {
         let mut size = 0;
 
         while let Some(&chr) = self.lookahead.peek() {

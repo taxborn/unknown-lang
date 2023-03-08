@@ -1,10 +1,10 @@
 pub mod comments;
+pub mod errors;
 pub mod literals;
 pub mod state;
 pub mod tokens;
-pub mod errors;
 
-use self::{state::Lexer, tokens::Token, errors::LexingError};
+use self::{errors::LexingError, state::Lexer, tokens::Token};
 
 type TokenResult = Result<Token, LexingError>;
 
@@ -31,26 +31,26 @@ fn is_valid_id_start(chr: char) -> bool {
 }
 
 impl<'a> Lexer<'a> {
-    /// next_char to the next character and output its token
-    fn single_token(&mut self, token: Token) -> Token {
-        self.next_char();
-        token
-    }
-
-    /// Get the next *meaningful* [`Token`] from the lexer. Meaningful here means any token
-    /// which is not a comment token.
+    /// Get the next *meaningful* [`Token`] from the lexer. Meaningful here
+    /// means any token which is not a comment token.
     pub fn get_next_token(&mut self) -> TokenResult {
         loop {
             let token = self.lex_token()?;
 
-            // If the current token is a comment token, ignore it and continue to the
-            // next loops iteration
+            // If the current token is a comment token, ignore it and continue
+            // to the next loops iteration
             if let Token::Comment(_, _) = token {
                 continue;
             }
 
             return Ok(token);
         }
+    }
+
+    /// next_char to the next character and output its token
+    fn single_token(&mut self, token: Token) -> Token {
+        self.next_char();
+        token
     }
 
     /// Get the next token from the lexer.
@@ -131,7 +131,9 @@ impl<'a> Lexer<'a> {
                     self.next_char();
                     match self.lookahead.peek() {
                         Some('=') => Ok(self.single_token(Token::GreaterEq)),
-                        Some('>') => Ok(self.single_token(Token::GreaterGreater)),
+                        Some('>') => {
+                            Ok(self.single_token(Token::GreaterGreater))
+                        }
                         _ => Ok(Token::Greater),
                     }
                 }
@@ -151,12 +153,12 @@ impl<'a> Lexer<'a> {
                     }
                 }
                 '"' => self.lex_string(),
-                c if c.is_ascii_digit() => self.lex_number(), 
+                c if c.is_ascii_digit() => self.lex_number(),
                 c if is_valid_id_start(c) => {
                     let ident = self.accumulate_while(&is_valid_id).to_string();
                     Ok(Token::Ident(ident))
                 }
-                c => Ok(Token::Error(c)),
+                c => Err(LexingError::UnknownCharacter(c)),
             }
         } else {
             // If there is no character to move to, return an EOF Token

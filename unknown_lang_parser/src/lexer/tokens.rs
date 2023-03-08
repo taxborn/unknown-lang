@@ -84,7 +84,6 @@ pub enum Token {
     PlusEq,
 
     Eof,
-    Error(char),
 }
 
 impl std::fmt::Display for Token {
@@ -114,7 +113,6 @@ impl std::fmt::Display for Token {
             Token::Ident(ident) => write!(f, "[{ident}]"),
             Token::Comment(true, cmt) => write!(f, "{cmt}"),
             Token::Comment(false, cmt) => write!(f, "// {cmt}"),
-            Token::Error(err) => write!(f, "ERR[{err}]"),
             Token::Number(base, num) => write!(f, "Num({num}, base={base})"),
 
             Token::Plus => write!(f, "+"),
