@@ -123,10 +123,10 @@ impl<'a> Lexer<'a> {
                     Some('(') => {
                         // consume base specifier
                         self.next_char();
-                        // TODO: Parse everything between the parenthesis as a 
+                        // TODO: Parse everything between the parenthesis as a
                         // number itself, so we can have something like this:
                         // 0(0xF)AFED, which would convert to 0(16)AFED.
-                        let base = self.accumulate_while(&|x| x.is_digit(10));
+                        let base = self.accumulate_while(&|x| x.is_ascii_digit());
 
                         if let Ok(radix) = base.parse::<u8>() {
                             if let Some(')') = self.lookahead.peek() {
@@ -144,7 +144,7 @@ impl<'a> Lexer<'a> {
 
                                 let num = self.accumulate_while(&|x| x.is_digit(radix as u32));
 
-                                return Ok(Token::Number(radix as u8, num.to_string()));
+                                return Ok(Token::Number(radix, num.to_string()));
                             }
 
                             return Err(LexingError::UnclosedBaseSpecifier);
@@ -179,33 +179,15 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_matching_double_quotes() {
+    fn test_lexes_string() {
         let input = "\"this is a test\"";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Str("this is a test".to_string())));
-    }
-
-    #[test]
-    fn test_newlines_within_strings() {
-        let input = "\"this is a \r\t\ntest\"";
-        let mut lexer = Lexer::new(input);
-
-        let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Str("this is a \r\t\ntest".to_string())));
 
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Eof));
-    }
-
-    #[test]
-    fn test_character_escapes() {
-        let input = "\"this is a \ttest\"";
-        let mut lexer = Lexer::new(input);
-
-        let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Str("this is a \ttest".to_string())));
     }
 
     #[test]
@@ -218,41 +200,36 @@ mod tests {
     }
 
     #[test]
-    fn test_lexing_negative_numbers() {
-        let input = "-123";
+    fn test_newlines_within_strings() {
+        let input = "\"this is a \n\n\ntest\n\"";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Minus));
-        let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
+        assert_eq!(tok, Ok(Token::Str("this is a \n\n\ntest\n".to_string())));
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Eof));
     }
 
     #[test]
-    fn test_lexing_numbers() {
-        let input = "123";
+    fn test_character_escapes() {
+        let input = r#""this\ris\na\t \\ \ttest\0""#;
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
+        assert_eq!(tok, Ok(Token::Str("this\ris\na\t \\ \ttest\0".to_string())));
     }
 
     #[test]
-    fn test_lexing_other_base() {
-        let input = "0b100101";
+    fn test_allows_quote() {
+        let input = r#""this\ris\na\t \" \\ \ttest\0""#;
         let mut lexer = Lexer::new(input);
-        let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Number(2, "100101".to_string())));
-    }
 
-    #[test]
-    fn test_catches_unknown_escape() {
-        let input = r#""unknown sequence\p""#;
-        let mut lexer = Lexer::new(input);
         let tok = lexer.lex_next();
-        assert_eq!(tok, Err(LexingError::UnknownEscapedCharacter('p')));
+        assert_eq!(
+            tok,
+            Ok(Token::Str("this\ris\na\t \" \\ \ttest\0".to_string()))
+        );
     }
 
     #[test]
@@ -264,29 +241,89 @@ mod tests {
     }
 
     #[test]
+    fn test_catches_unknown_escape() {
+        let input = r#""unknown sequence\p""#;
+        let mut lexer = Lexer::new(input);
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::UnknownEscapedCharacter('p')));
+    }
+
+    #[test]
+    fn test_lexing_numbers() {
+        let input = "123";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
+    }
+
+    // Since we are going to leave managing negative numbers to parsing, we are
+    // checking if these lex into two seperate tokens sequentially.
+    #[test]
+    fn test_lexing_negative_numbers() {
+        let input = "-123";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Minus));
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Eof));
+    }
+
+    #[test]
+    fn test_lexing_other_base() {
+        let input = "0b100101";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(2, "100101".to_string())));
+    }
+
+    #[test]
     fn test_awkward_base() {
         let input = "0(17)123";
         let mut lexer = Lexer::new(input);
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Number(17, "123".to_string())));
     }
 
     #[test]
-    fn test_awkward_base_2() {
+    fn test_awkward_max_base() {
         let input = "0(36)123";
         let mut lexer = Lexer::new(input);
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Number(36, "123".to_string())));
+    }
+
+    #[test]
+    fn test_invalid_base() {
+        let input = "0(128)123";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::BaseTooLarge(128)));
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Number(10, "123".to_string())));
     }
 
     #[test]
     fn test_unclosed_base_specifier() {
         let input = "0(21;";
         let mut lexer = Lexer::new(input);
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Err(LexingError::UnclosedBaseSpecifier));
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Semi));
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Eof));
     }

@@ -63,34 +63,57 @@ mod tests {
 
     #[test]
     fn test_lexing_single_line_comments() {
-        let input = "// This is a comment";
+        let input = "//This is a comment";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Comment(false, " This is a comment".to_string())));
+        assert_eq!(tok, Ok(Token::Comment(false, "This is a comment".to_string())));
+
+        let tok = tok.unwrap();
+        assert!(!tok.is_multiline_comment());
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Eof));
     }
 
+
     #[test]
-    fn test_single_line_comment_token_contents() {
-        let input = "//test";
+    fn test_comment_retain_spaces() {
+        let input = "//  This is a comment";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
-        assert_eq!(tok, Ok(Token::Comment(false, "test".to_string())));
-
+        assert_eq!(tok, Ok(Token::Comment(false, "  This is a comment".to_string())));
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Eof));
     }
 
     #[test]
     fn test_lexing_multi_line_comments() {
-        let input = "/*this is \n\na\n\nmultiline comment*/";
+        let input = r"/* wow!
+                       * this is a multiline comment
+                       * cool.
+                       */";
         let mut lexer = Lexer::new(input);
 
         let tok = lexer.lex_next();
         assert!(matches!(tok, Ok(Token::Comment(true, _))));
 
+        let tok = tok.unwrap();
+        assert!(tok.is_multiline_comment());
+
         let tok = lexer.lex_next();
         assert_eq!(tok, Ok(Token::Eof));
+    }
+
+    #[test]
+    fn test_unclosed_multiline() {
+        let input = r"/* wow!
+                       * this is a multiline comment
+                       * cool.";
+        let mut lexer = Lexer::new(input);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Err(LexingError::UnclosedMutlilineComment));
     }
 }
