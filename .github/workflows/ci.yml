@@ -67,4 +67,4 @@ jobs:
       - name: install cargo-fmt
         run: rustup component add rustfmt --toolchain nightly-x86_64-unknown-linux-gnu
       - name: cargo fmt
-        run: cargo fmt --check --message-format=json | cargo-action-fmt
+        run: cargo fmt --all --message-format=json | cargo-action-fmt
