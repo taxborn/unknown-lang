@@ -52,6 +52,8 @@ jobs:
       - uses: olix0r/cargo-action-fmt@ee1ef42932e44794821dab57ef1bf7a73df8b21f
       - name: rust toolchain
         run: rustup show active-toolchain; cargo --version; rustc --version
+      - name: cargo install clippy
+        run: rustup component add clippy --toolchain nightly-x86_64-unknown-linux-gnu
       - name: cargo clippy
         run: cargo clippy --all-features --message-format=json | cargo-action-fmt
 
