@@ -3,6 +3,7 @@ pub mod errors;
 pub mod literals;
 pub mod state;
 pub mod tokens;
+pub mod position;
 
 use self::{errors::LexingError, state::Lexer, tokens::Token};
 
