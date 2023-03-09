@@ -92,3 +92,57 @@ impl<'a> Lexer<'a> {
         self.lex_token()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use crate::lexer::tokens::Token;
+
+    use super::*;
+
+    #[test]
+    fn test_lexer_creation() {
+        let input = "let a := 5;";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(lexer.input, "let a := 5;");
+        assert_eq!(lexer.lookahead.peek(), Some(&'l'));
+        assert_eq!(lexer.pos, 0);
+    }
+
+    #[test]
+    fn test_lexer_creation_none() {
+        let input = "";
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(lexer.input, "");
+        assert_eq!(lexer.lookahead.peek(), None);
+        assert_eq!(lexer.pos, 0);
+    }
+
+    #[test]
+    fn test_consuming_characters() {
+        let input = "let a := 5;";
+        let mut lexer = Lexer::new(input);
+
+        let out = lexer.next_char();
+
+        assert_eq!(out, Some('l'));
+        assert_eq!(lexer.lookahead.peek(), Some(&'e'));
+        assert_eq!(lexer.pos, 1);
+    }
+
+    #[test]
+    fn test_consuming_nothing() {
+        let input = "";
+        let mut lexer = Lexer::new(input);
+
+        let out = lexer.next_char();
+
+        assert_eq!(out, None);
+        assert_eq!(lexer.lookahead.peek(), None);
+        assert_eq!(lexer.pos, 0);
+
+        let tok = lexer.lex_next();
+        assert_eq!(tok, Ok(Token::Eof));
+    }
+}

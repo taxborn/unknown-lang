@@ -44,6 +44,7 @@ impl<'a> Lexer<'a> {
             return Err(LexingError::UnclosedMutlilineComment);
         }
 
+        // subtract 2 from the size since we don't want to include the last '*/'
         let comment = &self.input[..size - 2];
         self.input = &self.input[size..];
         Ok(Token::Comment(true, comment.to_string()))

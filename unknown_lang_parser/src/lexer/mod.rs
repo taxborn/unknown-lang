@@ -154,10 +154,9 @@ impl<'a> Lexer<'a> {
                 }
                 '"' => self.lex_string(),
                 c if c.is_ascii_digit() => self.lex_number(),
-                c if is_valid_id_start(c) => {
-                    let ident = self.accumulate_while(&is_valid_id).to_string();
-                    Ok(Token::Ident(ident))
-                }
+                c if is_valid_id_start(c) => Ok(Token::Ident(
+                    self.accumulate_while(&is_valid_id).to_string(),
+                )),
                 c => Err(LexingError::UnknownCharacter(c)),
             }
         } else {

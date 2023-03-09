@@ -1,0 +1,4 @@
+// playground file to just test features
+func test(a: usize, b: usize) : usize = {
+    let c : usize = a + b + 0x23F + 0(20)2312Ji;
+}

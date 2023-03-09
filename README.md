@@ -9,12 +9,18 @@ cargo run -- --file <file.ukl>
 ### Examples
 There are a few examples right now, however since there is only a lexer, you can
 only output the tokenization of the file for now. Those examples are in the 
-[examples](./examples/) directory, and 
+[examples](./examples/) directory.
 
 ```bash
+# print the lexical tokens of the `examples/mut.ukl` file
 cargo run -- --file examples/mut.ukl -p
 ```
-Pass through the `-p` or `--print-tokens` flag to print the tokens
+> Pass through the `-p` or `--print-tokens` flag to print the tokens.
+> Pass through the `-d` or `--diagnostics` flag to print timings for lexing.
+
+## Tools
+Currently, there is a *very* basic syntax highlighting file in the [editor](./editor/) folder for 
+[Vim](https://www.vim.org/)/[Neovim](https://neovim.io/).
 
 ## Grammar
 The [EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form)
