@@ -16,6 +16,7 @@ only output the tokenization of the file for now. Those examples are in the
 cargo run -- --file examples/mut.ukl -p
 ```
 > Pass through the `-p` or `--print-tokens` flag to print the tokens.
+
 > Pass through the `-d` or `--diagnostics` flag to print timings for lexing.
 
 ## Tools
