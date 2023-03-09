@@ -3,6 +3,7 @@ use colored::*;
 use std::{fs, path::PathBuf};
 
 use unknown_lang_parser::lexer::{state::Lexer, tokens::Token};
+use unknown_lang_parser::state;
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -45,41 +46,10 @@ fn main() -> anyhow::Result<()> {
         compile_path.display().to_string().green().bold()
     );
 
-    let mut lexer = Lexer::new(&file_contents);
+    let lexer = Lexer::new(&file_contents);
+    let mut parser = state::Parser::new(lexer);
 
-    //-----------------------------
-    // This section currently is for debug purposes, this will be removed and
-    // substituted in for a parser.
-
-    let mut tok = lexer.lex_next()?;
-    let mut count = 0;
-    let start = std::time::Instant::now();
-
-    // loop through the tokens
-    while tok != Token::Eof {
-        count += 1;
-        if args.print_tokens {
-            println!("{tok:?}");
-        }
-
-        tok = lexer.lex_next()?;
-    }
-
-    let end = start.elapsed();
-
-    if args.diagnostics {
-        println!(
-            "{} {} {} {} {:?}{}",
-            ">".blue().bold(),
-            "Lexing".green(),
-            count,
-            "tokens took".green(),
-            end,
-            ".".green()
-        );
-    }
-
-    //-----------------------------
+    parser.iter_thru_tokens();
 
     println!(
         "{} {}",

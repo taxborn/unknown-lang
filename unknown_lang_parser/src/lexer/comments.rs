@@ -20,9 +20,9 @@ impl<'a> Lexer<'a> {
         let mut size = 0;
         self.next_char();
 
-        let mut advance = |p: &mut Lexer<'a>, chr: char| {
+        let mut advance = |lexer: &mut Lexer<'a>, chr: char| {
             size += chr.len_utf8();
-            p.lookahead.next();
+            lexer.lookahead.next();
         };
 
         while let Some(&chr) = self.lookahead.peek() {
